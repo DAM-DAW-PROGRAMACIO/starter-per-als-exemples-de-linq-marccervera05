@@ -1,6 +1,8 @@
 ﻿using LinQ.Model;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace LinQ
@@ -19,7 +21,11 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("=== EXEMPLE 1.1: Filtratge simple amb Where ===\n");
 
-            
+            var elementsDel75 = biblioteca.Elements.Where(e => e.Any == 1975);
+            foreach (var element in elementsDel75.Take(5))
+            {
+                Console.WriteLine($"{element.GetType().Name}: => {element}");
+            }
         }
 
         /// <summary>
@@ -32,7 +38,12 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 1.2: Filtratge amb múltiples condicions ===\n");
 
-           
+            var elementVidaExemple = biblioteca.Elements.Where(
+                e => (e.Any >= 2007 && e.Any <= 2026) && e.Etiquetes.Contains("classic", StringComparer.OrdinalIgnoreCase));
+            foreach(var element in elementVidaExemple.Take(5)) 
+            {
+                Console.WriteLine(elementVidaExemple);
+            }
         }
 
         /// <summary>
@@ -45,7 +56,8 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 1.3: Filtratge per tipus amb OfType ===\n");
 
-            
+            var elementCanço = biblioteca.Elements.OfType<Canco>();
+
         }
 
         #endregion
@@ -62,7 +74,7 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 2.1: Projecció simple amb Select ===\n");
 
-            
+            var titols = biblioteca.Elements.Select(element => element.Titol);
         }
 
         /// <summary>
@@ -75,7 +87,17 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 2.2: Projecció amb tipus anònim ===\n");
 
-           
+            var titolArtistaAny = biblioteca.Elements.OfType<Canco>().Select(x =>  new { 
+                x.Titol, 
+                x.Artista, 
+                x.Any, 
+                DuradaMinuts = x.DuradaSegons/60.0
+            });
+
+            foreach (var element in titolArtistaAny)
+            { 
+                Console.WriteLine(element.ToString());
+            }
         }
 
         /// <summary>
@@ -88,6 +110,8 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 2.3: Combinació de Where i Select ===\n");
 
+            var titols = biblioteca.Elements.OfType<Canco>().Where(x => x.Genere == "Grunge" && 
+            x.Etiquetes.Contains("grunge", StringComparer.OrdinalIgnoreCase)).Select(canco => canco.Titol);
         }
 
         #endregion
@@ -104,7 +128,7 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 3.1: Ordenació simple amb OrderBy ===\n");
 
-           
+            var canco = biblioteca.Elements.OfType<Canco>().OrderBy(x => x.Titol, StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -134,7 +158,7 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 4.1: Quantificador Any ===\n");
 
-            
+            var pelicules = biblioteca.Elements.OfType<Pelicula>().Any(x => x.Valoracio >= 9);
         }
 
         /// <summary>
@@ -147,7 +171,7 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 4.2: Quantificador All ===\n");
 
-            
+            var pagines = biblioteca.Elements.OfType<Llibre>().All(x => x.Pagines >= 150);
         }
 
         #endregion
@@ -165,7 +189,7 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 5.1: Cerca del primer element ===\n");
 
-            
+            var elem = biblioteca.Elements.OfType<Pelicula>().FirstOrDefault(x => x.DuradaMinuts >= 160);
         }
 
         /// <summary>
@@ -178,7 +202,7 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 5.2: Cerca d'element únic ===\n");
 
-            
+            var inception = biblioteca.Elements.SingleOrDefault(x => x.Titol == "Inception");
         }
 
         #endregion
@@ -195,7 +219,8 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 6.1: Agregació - Count ===\n");
 
-            
+            var canco = biblioteca.Elements.OfType<Canco>().Count();
+            var canco2 = biblioteca.Elements.Count(x => x is Canco);
         }
 
         /// <summary>
@@ -208,7 +233,12 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 6.2: Agregació - Sum i Average ===\n");
 
-            
+            var cancons = biblioteca.Elements.OfType<Canco>();
+
+            var duradaTot = cancons.Sum(x => x.DuradaSegons);
+            TimeSpan duradaTotal = TimeSpan.FromSeconds(duradaTot);            
+            var avg = cancons.Average(x => x.DuradaSegons);
+            TimeSpan duradaAvg = TimeSpan.FromSeconds(avg);
         }
 
         /// <summary>
@@ -221,7 +251,11 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 6.3: Agregació - Min i Max ===\n");
 
-            
+            var min = biblioteca.Elements.OfType<Llibre>().Min(x => x.Pagines);
+            var max = biblioteca.Elements.OfType<Llibre>().Max(x => x.Pagines);
+
+            Llibre llibreMax = biblioteca.Elements.OfType<Llibre>().First(x => x.Pagines == max);
+            Llibre llibreMin = biblioteca.Elements.OfType<Llibre>().First(x => x.Pagines == min);
         }
 
         #endregion
@@ -238,7 +272,7 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 7.1: Agrupació simple amb GroupBy ===\n");
 
-            
+            var grup = biblioteca.Elements.GroupBy(x => x.Any/10 * 10).OrderBy(d => d.Key);
         }
 
         /// <summary>
@@ -251,7 +285,8 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 7.2: Agrupació amb agregació ===\n");
 
-            
+            var proj = biblioteca.Elements.OfType<Canco>().GroupBy(x => x.Genere).Select
+                (x => new { nCancons = x.Count(), dTotal = TimeSpan.FromSeconds(x.Sum(c => c.DuradaSegons)) });
         }
 
         /// <summary>
@@ -264,7 +299,8 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 7.3: Agrupació amb filtre de grups ===\n");
 
-            
+            var flitre = biblioteca.Elements.OfType<Canco>().GroupBy(c => c.Genere).Where(d => d.Count() > 2).Select(d => new
+            { Genere = d.Key, NumCancons = d.Count(), DuradaTotal = TimeSpan.FromSeconds(d.Sum(can => can.DuradaSegons))});
         }
 
         #endregion
@@ -281,7 +317,7 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 8.1: Elements únics amb Distinct ===\n");
 
-            
+            var autors = biblioteca.Elements.Select(e => e.Autor).Distinct().OrderBy(e => e).ToList();
         }
 
         /// <summary>
@@ -294,7 +330,9 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 8.2: Unió amb Union ===\n");
 
-            
+            var autorL = biblioteca.Elements.OfType<Llibre>().Select(a => a.Autor);
+            var autorP = biblioteca.Elements.OfType<Pelicula>().Select(a => a.Autor);
+            var unio = autorL.Union(autorP).OrderBy(a => a);
         }
 
         /// <summary>
@@ -307,7 +345,9 @@ namespace LinQ
             var biblioteca = GeneradorDades.CreaBiblioteca();
             Console.WriteLine("\n=== EXEMPLE 8.3: Intersecció amb Intersect ===\n");
 
-            
+            var autorL = biblioteca.Elements.OfType<Llibre>().Select(a => a.Autor);
+            var autorP = biblioteca.Elements.OfType<Pelicula>().Select(a => a.Autor);
+            var inter = autorL.Intersect(autorP).OrderBy(a => a);
         }
 
         #endregion
